@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lovintage English Practice</title>
+  <style>
+    :root { --ink:#201a17; --paper:#fffaf4; --rose:#aa4b5c; --blush:#f6d8d3; --line:#ead8d1; --muted:#756862; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); background:linear-gradient(135deg,#f8e7df, var(--paper) 45%,#f2e5cf); font:16px/1.55 ui-rounded, "Avenir Next", system-ui, sans-serif; }
+    main { width:min(900px, calc(100% - 32px)); margin:0 auto; padding:44px 0 56px; }
+    header { text-align:center; margin-bottom:28px; }
+    .eyebrow { color:var(--rose); font-weight:800; letter-spacing:.14em; font-size:.75rem; text-transform:uppercase; }
+    h1 { margin:8px 0 8px; font-family:Georgia,serif; font-size:clamp(2.1rem,6vw,4.3rem); line-height:1; }
+    header p { max-width:550px; margin:0 auto; color:var(--muted); }
+    .controls { display:flex; flex-wrap:wrap; align-items:center; gap:12px; justify-content:center; padding:16px; margin-bottom:20px; background:#ffffffaa; border:1px solid var(--line); border-radius:18px; backdrop-filter:blur(10px); }
+    button, select { font:inherit; border-radius:999px; border:1px solid var(--line); padding:10px 15px; background:white; color:var(--ink); cursor:pointer; }
+    button:hover { transform:translateY(-1px); box-shadow:0 5px 12px #7b514122; }
+    .primary { background:var(--rose); border-color:var(--rose); color:white; font-weight:750; }
+    label { color:var(--muted); font-size:.9rem; }
+    #status { min-height:1.5em; color:var(--rose); font-size:.9rem; font-weight:650; text-align:center; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px; }
+    .card { position:relative; padding:20px 20px 18px; background:#fffdfb; border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 30px #72504212; transition:.2s ease; }
+    .card:hover { border-color:#dba6a0; transform:translateY(-2px); }
+    .number { display:inline-grid; place-items:center; width:28px; height:28px; margin-bottom:12px; border-radius:50%; background:var(--blush); color:var(--rose); font-weight:800; font-size:.8rem; }
+    .phrase { margin:0 0 8px; font-size:1.08rem; font-weight:760; line-height:1.35; }
+    .meaning { margin:0 0 16px; color:var(--muted); font-size:.93rem; }
+    .speak { padding:8px 13px; color:var(--rose); font-weight:750; }
+    footer { margin-top:30px; text-align:center; color:var(--muted); font-size:.88rem; }
+    @media (max-width:480px) { main { padding-top:30px; } .controls { align-items:stretch; } select { width:100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Lovintage · Live English</div>
+      <h1>Speak with confidence.</h1>
+      <p>Tap a phrase to hear it, then repeat it aloud. These are friendly, useful lines for a vintage fashion livestream.</p>
+    </header>
+
+    <section class="controls" aria-label="Speech controls">
+      <button class="primary" id="playAll">▶ Play all phrases</button>
+      <button id="stop">■ Stop</button>
+      <label for="rate">Speed</label>
+      <select id="rate">
+        <option value="0.75">Slow</option>
+        <option value="0.9" selected>Practice</option>
+        <option value="1">Normal</option>
+      </select>
+    </section>
+    <div id="status" aria-live="polite">Choose a phrase to begin.</div>
+    <section class="grid" id="phrases"></section>
+    <footer>Tip: listen once, repeat twice, then try the phrase without looking.</footer>
+  </main>
+
+  <script>
+    const phrases = [
+      ["Welcome to Lovintage's live show!", "歡迎來到 Lovintage 直播間！"],
+      ["Thank you for joining us today.", "謝謝你今天加入我們。"],
+      ["This is a beautiful vintage piece.", "這是一件很美的中古單品。"],
+      ["Let me show you the details.", "讓我給你看看細節。"],
+      ["The condition is very good for its age.", "以它的年份來說，狀況非常好。"],
+      ["Please look at the corners and the hardware.", "請看看四角和五金。"],
+      ["This item comes with its authenticity card.", "這件商品附有保證卡。"],
+      ["It is one of a kind, so don't miss it.", "它是獨一無二的，別錯過。"],
+      ["The price is shown on the screen.", "價格顯示在螢幕上。"],
+      ["We can ship worldwide.", "我們可以寄送到全世界。"],
+      ["Please leave a comment if you have a question.", "有問題請留言。"],
+      ["Would you like to see it worn?", "你想看上身效果嗎？"],
+      ["I will measure it for you now.", "我現在幫你量尺寸。"],
+      ["Thank you so much for your support.", "非常感謝你的支持。"],
+      ["See you at our next live show!", "下次直播見！"]
+    ];
+    const list = document.getElementById('phrases');
+    const status = document.getElementById('status');
+    const rate = document.getElementById('rate');
+    let playingAll = false;
+
+    phrases.forEach(([english, chinese], i) => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = '<div class="number">' + String(i + 1).padStart(2, '0') + '</div><p class="phrase"></p><p class="meaning"></p><button class="speak" type="button">🔊 Listen</button>';
+      card.querySelector('.phrase').textContent = english;
+      card.querySelector('.meaning').textContent = chinese;
+      card.querySelector('button').addEventListener('click', () => speak(english));
+      list.appendChild(card);
+    });
+
+    function speak(text, onEnd) {
+      if (!('speechSynthesis' in window)) {
+        status.textContent = 'Speech is not supported in this browser.';
+        return;
+      }
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = Number(rate.value);
+      utterance.onstart = () => status.textContent = 'Listening: ' + text;
+      utterance.onend = () => { if (onEnd) onEnd(); else status.textContent = 'Your turn — repeat it aloud.'; };
+      utterance.onerror = () => { playingAll = false; status.textContent = 'Speech stopped. Please try again.'; };
+      speechSynthesis.speak(utterance);
+    }
+
+    document.getElementById('stop').addEventListener('click', () => {
+      playingAll = false; speechSynthesis.cancel(); status.textContent = 'Stopped.';
+    });
+    document.getElementById('playAll').addEventListener('click', () => {
+      if (!('speechSynthesis' in window)) { status.textContent = 'Speech is not supported in this browser.'; return; }
+      playingAll = true;
+      let index = 0;
+      const next = () => {
+        if (!playingAll || index >= phrases.length) {
+          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 15 phrases!' : 'Stopped.'; return;
+        }
+        speak(phrases[index++][0], () => setTimeout(next, 550));
+      };
+      next();
+    });
+  </script>
+</body>
+</html>
