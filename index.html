@@ -26,7 +26,7 @@
     .phrase { margin:0 0 8px; font-size:1.08rem; font-weight:760; line-height:1.35; }
     .meaning { margin:0 0 16px; color:var(--muted); font-size:.93rem; }
     .speak { padding:8px 13px; color:var(--rose); font-weight:750; }
-    footer { margin-top:30px; text-align:center; color:var(--muted); font-size:.88rem; }
+    .flashcard { max-width:650px; margin:20px auto; background:#fffdfb; border:1px solid var(--line); border-radius:22px; padding:28px 20px; text-align:center; } .flash-face { min-height:180px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border-radius:15px; background:#f9eee9; padding:22px; } .flash-face strong {font-size:clamp(1.2rem,4vw,1.7rem);line-height:1.5;} .flash-actions {display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:16px;} .flash-actions button:disabled {opacity:.4;cursor:not-allowed;} .flash-note {color:var(--muted);font-size:.85rem;margin-top:8px;} .hidden {display:none!important;} footer { margin-top:30px; text-align:center; color:var(--muted); font-size:.88rem; }
     @media (max-width:480px) { main { padding-top:30px; } .controls { align-items:stretch; } select { width:100%; } }
   </style>
 </head>
@@ -48,7 +48,7 @@
         <option value="1">Normal</option>
       </select>
     </section>
-    <div id="status" aria-live="polite">Choose a phrase to begin.</div>
+    <section class="controls" aria-label="Practice mode"><button id="listMode" class="primary">句子列表</button><button id="flashMode">記憶卡測驗</button></section><section id="flashPanel" class="flashcard hidden"><p id="flashCount"></p><div id="flashFace" class="flash-face" role="button" tabindex="0" aria-label="點擊翻卡"><small id="flashLabel">中文題目</small><strong id="flashText"></strong><span class="flash-note">點擊卡片翻轉</span></div><div class="flash-actions"><button id="flashPrev">上一題</button><button id="flashNext">下一題</button><button id="flashSpeak" disabled>🔊 播放英文</button><button id="flashRemember" disabled>✓ 記得</button><button id="flashAgain" disabled>↻ 唔記得</button></div><p id="flashProgress" class="flash-note"></p></section><div id="status" aria-live="polite">Choose a phrase to begin.</div>
     <section class="grid" id="phrases"></section>
     <footer>Tip: listen once, repeat twice, then try the phrase without looking.</footer>
   </main>
@@ -87,6 +87,42 @@
       list.appendChild(card);
     });
 
+    let flashIndex = 0, revealed = false;
+    let scores = {};
+    try { scores = JSON.parse(localStorage.getItem('lovintage-flash-v1') || '{}'); } catch(e) {}
+    const flashPanel = document.getElementById('flashPanel');
+    const flashText = document.getElementById('flashText');
+    function renderFlash() {
+      document.getElementById('flashCount').textContent = '第 ' + (flashIndex + 1) + ' / ' + phrases.length + ' 題';
+      document.getElementById('flashLabel').textContent = revealed ? '英文答案' : '中文題目';
+      flashText.textContent = phrases[flashIndex][revealed ? 0 : 1];
+      ['flashSpeak','flashRemember','flashAgain'].forEach(id => document.getElementById(id).disabled = !revealed);
+      document.getElementById('flashProgress').textContent = '已標記記得：' + Object.values(scores).filter(x => x === 'remember').length + ' / ' + phrases.length + ' 題（此瀏覽器儲存）';
+    }
+    function flipFlash() { revealed = !revealed; speechSynthesis.cancel(); renderFlash(); }
+    function moveFlash(step) { speechSynthesis.cancel(); flashIndex = (flashIndex + step + phrases.length) % phrases.length; revealed = false; renderFlash(); }
+    document.getElementById('flashFace').onclick = flipFlash;
+    document.getElementById('flashFace').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flipFlash(); } };
+    document.getElementById('flashPrev').onclick = () => moveFlash(-1);
+    document.getElementById('flashNext').onclick = () => moveFlash(1);
+    document.getElementById('flashSpeak').onclick = () => { if(revealed) speak(phrases[flashIndex][0]); };
+    function grade(value) { scores[flashIndex] = value; try {localStorage.setItem('lovintage-flash-v1',JSON.stringify(scores));} catch(e) {} moveFlash(1); }
+    document.getElementById('flashRemember').onclick = () => grade('remember');
+    document.getElementById('flashAgain').onclick = () => grade('again');
+    document.getElementById('flashMode').onclick = () => {
+      document.getElementById('phrases').classList.add('hidden');
+      flashPanel.classList.remove('hidden');
+      document.getElementById('listMode').classList.remove('primary');
+      document.getElementById('flashMode').classList.add('primary');
+      revealed = false; renderFlash();
+    };
+    document.getElementById('listMode').onclick = () => {
+      flashPanel.classList.add('hidden');
+      document.getElementById('phrases').classList.remove('hidden');
+      document.getElementById('listMode').classList.add('primary');
+      document.getElementById('flashMode').classList.remove('primary');
+    };
+    renderFlash();
     function speak(text, onEnd) {
       if (!('speechSynthesis' in window)) {
         status.textContent = 'Speech is not supported in this browser.';
