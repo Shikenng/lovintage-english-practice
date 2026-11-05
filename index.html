@@ -70,7 +70,6 @@
       ["I will measure it for you now.", "我現在幫你量尺寸。"],
       ["Thank you so much for your support.", "非常感謝你的支持。"],
       ["See you at our next live show!", "下次直播見！"],
-      ["At Lovintage, we respect Chanel and its heritage.", "Lovintage 尊重 Chanel 及其品牌傳承。"],
       ["Overall, this bag shows clear signs of use.", "手袋整體有明顯的使用感。"]
     ];
     const list = document.getElementById('phrases');
@@ -112,7 +111,7 @@
       let index = 0;
       const next = () => {
         if (!playingAll || index >= phrases.length) {
-          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 17 phrases!' : 'Stopped.'; return;
+          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 16 phrases!' : 'Stopped.'; return;
         }
         speak(phrases[index++][0], () => setTimeout(next, 550));
       };
