@@ -55,6 +55,7 @@
 
   <script>
     const phrases = [
+      ["The hardware has slight signs of use, but it's vintage, so it's still acceptable.", "硬件有少許使用痕跡，畢竟這是 Vintage，還是可以接受的。"],
       ["This bag comes with a shoulder strap.", "這手袋是有肩帶的。"],
       ["Welcome to Lovintage's live show!", "歡迎來到 Lovintage 直播間！"],
       ["Thank you for joining us today.", "謝謝你今天加入我們。"],
@@ -148,7 +149,7 @@
       let index = 0;
       const next = () => {
         if (!playingAll || index >= phrases.length) {
-          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 17 phrases!' : 'Stopped.'; return;
+          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 18 phrases!' : 'Stopped.'; return;
         }
         speak(phrases[index++][0], () => setTimeout(next, 550));
       };
