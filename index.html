@@ -55,6 +55,7 @@
 
   <script>
     const phrases = [
+      ["Can customer service help me reply to this question?", "客服可以幫我回覆這個問題嗎？"],
       ["For a bag that's decades old, this is normal, natural wear.", "一個幾十年的手袋，這也是正常的自然損耗。"],
       ["There are noticeable wrinkles in this area.", "這位置有明顯的皺紋。"],
       ["This is a very classic flap bag.", "這是一個非常經典的翻蓋包。"],
@@ -153,7 +154,7 @@
       let index = 0;
       const next = () => {
         if (!playingAll || index >= phrases.length) {
-          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 22 phrases!' : 'Stopped.'; return;
+          playingAll = false; status.textContent = index >= phrases.length ? 'Great work — you finished all 23 phrases!' : 'Stopped.'; return;
         }
         speak(phrases[index++][0], () => setTimeout(next, 550));
       };
